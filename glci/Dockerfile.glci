@@ -1,0 +1,51 @@
+FROM doc.ker.dev.dszn.cz/debian:buster
+
+ARG VERSION
+
+LABEL org.label-schema.schema-version="1.0.0-rc.1" \
+        org.label-schema.vendor="Seznam, a.s." \
+        org.label-schema.version="${VERSION}" \
+        org.label-schema.vcs-url="git@gitlab.seznam.net:neznam/wagtail.git" \
+        org.label-schema.name="GL-CI Image" \
+        org.label-schema.description="Image for Gitlab CI Tasks"\
+        MAINTAINER="Neznam team <neznam-team@firma.seznam.cz>"
+
+# czech/english localization
+RUN apt-get update && apt-get install -y locales
+RUN echo "cs_CZ.UTF-8 UTF-8" >> /etc/locale.gen
+RUN echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+RUN locale-gen
+ENV LANG="en_US.UTF-8"
+ENV LC_CTYPE="en_US.UTF-8"
+
+# # add yarn debian repository
+# RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
+#     && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+
+RUN apt-get update && apt-get install -y --allow-unauthenticated \
+    python3 \
+    python3-pip \
+    sudo \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# install wagtail
+RUN python3 -m pip install --upgrade pip
+    # python3 setup.py install
+
+RUN groupadd -r --gid=1000 neznalek && \
+    useradd -r --uid=1000 -b /opt/neznam -d /opt/neznam -m -s /bin/bash -g neznalek neznalek
+
+USER neznalek
+ENV USER="neznalek"
+ENV PYTHON=python3
+# ENV PYTHONPATH=.:apps
+ENV PYTHONUNBUFFERED=1
+
+# A mount point
+VOLUME /opt/neznam
+
+WORKDIR /opt/neznam
+
+# Expose port
+EXPOSE 8080
