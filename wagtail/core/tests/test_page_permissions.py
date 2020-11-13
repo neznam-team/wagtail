@@ -6,7 +6,7 @@ from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
 from wagtail.core.models import (
-    GroupApprovalTask, GroupPagePermission, Locale, Page, UserPagePermissionsProxy, Workflow,
+    DefaultUserPagePermissionsProxy, GroupApprovalTask, GroupPagePermission, Locale, Page, UserPagePermissionsProxy, Workflow,
     WorkflowTask)
 from wagtail.tests.testapp.models import (
     BusinessSubIndex, EventIndex, EventPage, SingletonPageViaMaxCount)
@@ -775,3 +775,24 @@ class TestPagePermissionTesterCanCopyTo(TestCase):
         self.assertTrue(board_meetings_page_perms.can_copy_to(self.board_meetings_page.get_parent()))
         # However, SingletonPageViaMaxCount.can_create_at() prevents copying, regardless of a user's permissions
         self.assertFalse(singleton_page_perms.can_copy_to(self.singleton_page.get_parent()))
+
+
+class CustomUserPagePermission(DefaultUserPagePermissionsProxy):
+    pass
+
+
+class TestPagePermissionProxy(TestCase):
+    fixtures = ['test.json']
+
+    def test_default_user_page_permission_proxy(self):
+        user = get_user_model().objects.get(username='inactiveuser')
+        permission_proxy = UserPagePermissionsProxy(user)
+        self.assertIsInstance(permission_proxy, DefaultUserPagePermissionsProxy)
+
+
+    def test_override_user_page_permission_proxy(self):
+        custom_permission = 'wagtail.core.tests.test_page_permissions.CustomUserPagePermission'
+        with self.settings(WAGTAIL_USER_PAGE_PERMISSION_PROXY=custom_permission):
+            user = get_user_model().objects.get(username='inactiveuser')
+            permission_proxy = UserPagePermissionsProxy(user)
+            self.assertIsInstance(permission_proxy, CustomUserPagePermission)
