@@ -1,0 +1,15 @@
+stages:
+  - test
+
+variables:
+    # pin Docker API version to 1.38 to avoid version mismatch between
+    # Docker client and docker daemon in gitlab runner
+    DOCKER_API_VERSION: "1.38"
+
+test:
+  stage: test
+  image: doc.ker.dev.dszn.cz/neznam/wagtail-glci:latest
+  script:
+      - python3 -m pip install --upgrade pip
+      - pip install .[testing]
+      - python3 runtests.py
