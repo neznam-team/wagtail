@@ -3003,6 +3003,15 @@ class GroupPagePermission(models.Model):
 
 
 class UserPagePermissionsProxy:
+
+    def __new__(cls, *args, **kwargs):
+        klass_path = getattr(settings, 'WAGTAIL_USER_PAGE_PERMISSION_PROXY', 'wagtail.core.models.DefaultUserPagePermissionsProxy')
+        klass = import_string(klass_path)
+        obj = klass(*args, **kwargs)
+        return obj
+
+
+class DefaultUserPagePermissionsProxy(object):
     """Helper object that encapsulates all the page permission rules that this user has
     across the page hierarchy."""
 
